@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"io"
 	"net/http"
-	"time"
 )
 
 const (
@@ -14,7 +13,7 @@ const (
 
 func NewClient() *http.Client {
 	return &http.Client{
-		Timeout: time.Minute * 10,
+		Timeout: 0,
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		},

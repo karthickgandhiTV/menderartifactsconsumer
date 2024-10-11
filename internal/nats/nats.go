@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
 	"github.com/menderartifactsconsumer/internal/config"
 	nats "github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
@@ -25,23 +26,24 @@ func SetupJetStream(nc *nats.Conn) (jetstream.JetStream, error) {
 	return js, nil
 }
 
-func InitStreamAndConsumer(nc *nats.Conn, ctx context.Context, js jetstream.JetStream, cfg *config.Config) {
+func InitStreamAndConsumer(nc *nats.Conn, ctx context.Context, js jetstream.JetStream, azureServiceClient *azblob.Client, cfg *config.Config) {
 	stream, err := js.Stream(ctx, "MenderUser")
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	consumer, err := stream.CreateOrUpdateConsumer(ctx, jetstream.ConsumerConfig{
-		Name:           "mender_device",
-		Durable:        "mender_device",
-		FilterSubjects: []string{"device.uploadArtifact.>"},
+		Name:           "mender_artifact",
+		Durable:        "mender_artifact",
+		FilterSubjects: []string{"artifact.GenerateSASToken.>", "artifact.uploadArtifact.>"},
 	})
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	log.Print("Waiting for messages..")
 	cctx, err := consumer.Consume(func(msgs jetstream.Msg) {
-		handleRequest(js, msgs)
+		handleRequest(js, msgs, azureServiceClient, cfg)
 		msgs.Ack()
 	})
 	if err != nil {

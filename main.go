@@ -5,6 +5,7 @@ import (
 	"log"
 	"time"
 
+	azureclient "github.com/menderartifactsconsumer/internal/azblob"
 	"github.com/menderartifactsconsumer/internal/config"
 	"github.com/menderartifactsconsumer/internal/nats"
 )
@@ -29,6 +30,11 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	defer cancel()
 
-	nats.InitStreamAndConsumer(nc, ctx, js, cfg)
+	azureServiceClient, err := azureclient.GetAzureBlobClient(cfg)
+	if err != nil {
+		log.Fatalf("Failed to create blob storage service client")
+	}
+
+	nats.InitStreamAndConsumer(nc, ctx, js, azureServiceClient, cfg)
 
 }
