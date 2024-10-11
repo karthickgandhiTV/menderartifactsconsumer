@@ -35,6 +35,7 @@ type UploadArtifactRequest struct {
 type GenerateSASTokenRequest struct {
 	RequestId     string `json:"requestId"`
 	ContainerName string `json:"containerName"`
+	BlobName      string `json:"blobName"`
 }
 
 type UploadArtifactConsumerResponse struct {
@@ -95,7 +96,7 @@ func UploadArtifact(ctx context.Context, js jetstream.JetStream, msg jetstream.M
 	log.Print(request.AuthRequest.Domain)
 	log.Printf("Received Request: %s", request.AuthRequest.RequestId)
 	token := request.AuthRequest.Token
-
+	msg.Ack()
 	downloadResponse, err := serviceClient.DownloadStream(ctx, request.BlobMetadata.ContainerName, request.BlobMetadata.BlobName, nil)
 	if err != nil {
 		log.Printf("Failed to start blob download: %v", err)
@@ -163,8 +164,6 @@ func UploadArtifact(ctx context.Context, js jetstream.JetStream, msg jetstream.M
 	responseBody, _ := io.ReadAll(resp.Body)
 	log.Print(string(responseBody))
 	log.Printf("StatusCode: %v", resp.StatusCode)
-
-	msg.Ack()
 
 	uploadArtifactTargetApplicationResponse := UploadArtifactTargetApplicationResponse{
 		RequestId:    request.AuthRequest.RequestId,
@@ -339,7 +338,7 @@ func GenerateNewSASToken(ctx context.Context, js jetstream.JetStream, msg jetstr
 	}
 
 	log.Print(request.ContainerName)
-	token, err := storageClient.CreateSASToken(cfg, request.ContainerName)
+	token, err := storageClient.CreateSASToken(cfg, request.ContainerName, request.BlobName)
 
 	if err != nil {
 		log.Printf("Failed to create sas token : %v", err)

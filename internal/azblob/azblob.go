@@ -18,6 +18,7 @@ import (
 
 type GenerateSASTokenResponse struct {
 	ContainerName string `json:"containerName"`
+	BlobName      string `json:"blobName"`
 	SASToken      string `json:"SASToken"`
 }
 
@@ -104,7 +105,7 @@ func GenerateSASStoken(cfg *config.Config, containerName string, blobName string
 	return fmt.Sprintf("%s?%s", containerClient.URL(), sasToken), nil
 }
 
-func CreateSASToken(cfg *config.Config, containerNameReceived string) (*GenerateSASTokenResponse, error) {
+func CreateSASToken(cfg *config.Config, containerNameReceived string, blobNameReceived string) (*GenerateSASTokenResponse, error) {
 	ctx := context.Background()
 	serviceClient, err := GetAzureBlobServiceClient(cfg)
 	if err != nil {
@@ -113,7 +114,7 @@ func CreateSASToken(cfg *config.Config, containerNameReceived string) (*Generate
 	}
 
 	CreateContainer(serviceClient, ctx, containerNameReceived)
-	sasToken, err := GenerateSASStoken(cfg, containerNameReceived, "raspberryimage", serviceClient)
+	sasToken, err := GenerateSASStoken(cfg, containerNameReceived, blobNameReceived, serviceClient)
 	if err != nil {
 		log.Printf("Failed to generate SAS token: %v", err)
 		return nil, err
